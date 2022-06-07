@@ -10,7 +10,7 @@
         state: directory
         owner: "{{ __galaxy_privsep_user_name }}"
         group: "{{ __galaxy_privsep_user_group }}"
-        mode: "{{ __galaxy_dir_perms }}"
+        mode: "{{ galaxy_privsep_world_dirs_perms }}" # We will further restrict permissions inside, but other users (e.g. nginx) need to access.
       when: galaxy_root is defined
 
     - name: Create additional privilege separated directories
@@ -19,8 +19,18 @@
         state: directory
         owner: "{{ __galaxy_privsep_user_name }}"
         group: "{{ __galaxy_user_group }}" #This is set so that the galaxy_user can read the files in the priv_sep dirs. (As priv_sep dirs have defauly perms of 0640.)
-        mode: "{{ __galaxy_dir_perms }}"
+        mode: "{{ galaxy_privsep_dirs_perms }}"
       with_items: "{{ galaxy_privsep_dirs }}"
+      when: item | default(False)
+
+    - name: Create additional privilege separated directories (world readable)
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ __galaxy_privsep_user_name }}"
+        group: "{{ __galaxy_user_group }}"
+        mode: "{{ galaxy_privsep_world_dirs_perms }}"
+      with_items: "{{ galaxy_privsep_world_dirs }}"
       when: item | default(False)
 
     - name: Create additional directories
@@ -29,7 +39,7 @@
         state: directory
         owner: "{{ __galaxy_user_name }}"
         group: "{{ __galaxy_user_group }}"
-        mode: "{{ __galaxy_dir_perms }}"
+        mode: "{{ galaxy_dirs_perms }}"
       with_items: "{{ galaxy_dirs }}"
 
   # TODO: for root squashing it might be useful for this to be separate from other root tasks
